@@ -107,3 +107,29 @@ Se instrumentó la aplicación para medir el tiempo de ejecución por corrida (e
 3) ¿1 hilo en 100 máquinas o c hilos en 100/c máquinas?
 
 - Distribuir reduce contención local y puede escalar mejor si el costo de coordinación/red es bajo. Con c hilos en 100/c máquinas se aprovechan núcleos locales manteniendo concurrencia total, pero la ganancia real depende de latencias y costos de coordinación (aplica la ley de Amdahl considerando fracción no paralelizable y overhead de distribución).
+
+## Punto IV: Análisis con la ley de Amdahl
+
+### Resumen
+Se interpretaron los resultados de la parte III usando la ley de Amdahl, identificando el impacto de la fracción no paralelizable y del overhead de concurrencia sobre el escalamiento al aumentar N hilos y al distribuir en varias máquinas.
+
+### Pasos realizados
+1. Cálculo de speedup observado: `S(N) = T(1) / T(N)` con los tiempos medidos.
+2. Estimación cualitativa de la fracción paralelizable `P` a partir de la tendencia de `S(N)`.
+3. Análisis del punto de rendimientos decrecientes por overhead (hilos en exceso vs núcleos disponibles).
+
+### Cómo probar
+- A partir de los tiempos del Punto III, calcular `S(N)` para cada N y compararlo con `S(N)=1/((1-P)+P/N)` para una `P` aproximada. Ver dónde el overhead práctico (planificación, memoria, sincronización) desvía la curva teórica.
+
+### Preguntas
+1) ¿Por qué no se logra el mejor desempeño con 500 hilos y cómo se compara con 200?
+
+- Porque el problema tiene una parte no paralelizable y además existe overhead de concurrencia (creación/cambio de contexto/colas/GC). Con 500 hilos se sobrecarga el planificador y se contiende más por CPU y memoria, degradando el rendimiento. Con 200 suele haber menor overhead por hilo y mejor utilización efectiva, por lo que puede rendir mejor que 500.
+
+2) ¿Tantos hilos como núcleos vs el doble?
+
+- Con hilos ≈ núcleos se minimiza cambio de contexto y se aprovecha al máximo la CPU. Con el doble, la contención y el cambio de contexto suben; a veces el rendimiento es similar o peor. Solo ayuda si hay latencias I/O o espera significativa; en cómputo CPU-bound, no suele mejorar.
+
+3) ¿1 hilo en 100 máquinas o c hilos en 100/c máquinas (siendo c núcleos)?
+
+- Amdahl mejora en escenarios distribuidos cuando el overhead de red/coord es pequeño comparado con el trabajo. 1 hilo en 100 máquinas elimina contención local pero añade latencia/red. c hilos en 100/c máquinas balancea el uso de núcleos locales manteniendo concurrencia total y puede rendir mejor si la partición es embarrassingly parallel y el overhead de distribución es bajo. El límite de Amdahl permanece por la porción no paralelizable y el overhead añadido.
