@@ -34,7 +34,6 @@ public class CountThread extends Thread {
                 System.out.println(i);
             }
         } else {
-            // If given in reverse, still count through the interval.
             for (int i = start; i >= end; i--) {
                 System.out.println(i);
             }
