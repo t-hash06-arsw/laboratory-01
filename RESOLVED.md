@@ -69,3 +69,41 @@ Se paralelizó la validación de IPs en listas negras dividiendo el espacio de s
 3) ¿Se detiene la búsqueda global al alcanzar 5 ocurrencias entre todos los hilos?
 
 - No. Esta optimización cruzada entre hilos corresponde al punto II.I para discutir. La implementación actual espera a que todos los hilos terminen y luego decide.
+
+## Punto III: Evaluación de desempeño
+
+### Resumen
+Se instrumentó la aplicación para medir el tiempo de ejecución por corrida (en milisegundos), permitiendo variar la cantidad de hilos y la IP bajo prueba desde argumentos. Con esto se pueden ejecutar las 5 pruebas solicitadas y recolectar tiempos para graficar.
+
+### Pasos realizados
+1. Actualización de `Main` para medición:
+	- Acepta `N` como primer argumento y una IP como segundo argumento (opcional).
+	- Mide el tiempo con `System.nanoTime()` alrededor de la llamada a `checkHost`.
+	- Imprime: `Threads=N, IP=..., Elapsed(ms)=...` y los IDs de listas encontradas.
+2. Preparación de escenarios:
+	- IP con ocurrencias tempranas: `200.24.34.55`.
+	- IP con ocurrencias dispersas: `202.24.34.55`.
+	- IP sin ocurrencias: `212.24.24.55`.
+
+### Cómo probar
+- Ejecutar variando N e IP para recolectar tiempos (correr varias veces y promediar):
+	1) Un solo hilo: `N=1`.
+	2) Tantos hilos como núcleos: `N=Runtime.getRuntime().availableProcessors()`.
+	3) El doble de núcleos: `N=2*Runtime.getRuntime().availableProcessors()`.
+	4) 50 hilos: `N=50`.
+	5) 100 hilos: `N=100`.
+- Anotar el consumo de CPU y memoria con jVisualVM durante cada prueba.
+- Graficar tiempo vs número de hilos y analizar.
+
+### Preguntas
+1) ¿Por qué no siempre mejora con muchos hilos (p.ej., 500) y cómo se compara con 200?
+
+- Por sobrecosto de creación/planificación de hilos, cambio de contexto, contención y saturación de CPU/memoria. Con 200 puede haber mejor relación trabajo/sobrecosto que con 500.
+
+2) ¿Tantos hilos como núcleos vs el doble?
+
+- Usar el doble puede aumentar sobrecosto y colas en CPU; según el caso, mejora poco o empeora por contención. Igualar núcleos suele ser un buen punto de partida.
+
+3) ¿1 hilo en 100 máquinas o c hilos en 100/c máquinas?
+
+- Distribuir reduce contención local y puede escalar mejor si el costo de coordinación/red es bajo. Con c hilos en 100/c máquinas se aprovechan núcleos locales manteniendo concurrencia total, pero la ganancia real depende de latencias y costos de coordinación (aplica la ley de Amdahl considerando fracción no paralelizable y overhead de distribución).

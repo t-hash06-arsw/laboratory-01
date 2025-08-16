@@ -16,9 +16,13 @@ public class Main {
     public static void main(String a[]) {
         HostBlackListsValidator hblv = new HostBlackListsValidator();
         int n = (a != null && a.length > 0) ? Integer.parseInt(a[0]) : 1;
-        List<Integer> blackListOcurrences = hblv.checkHost("200.24.34.55", n);
+        String ip = (a != null && a.length > 1) ? a[1] : "200.24.34.55";
+        long t0 = System.nanoTime();
+        List<Integer> blackListOcurrences = hblv.checkHost(ip, n);
+        long t1 = System.nanoTime();
+        long ms = (t1 - t0) / 1_000_000L;
+        System.out.println("Threads=" + n + ", IP=" + ip + ", Elapsed(ms)=" + ms);
         System.out.println("The host was found in the following blacklists:" + blackListOcurrences);
-
     }
 
 }
